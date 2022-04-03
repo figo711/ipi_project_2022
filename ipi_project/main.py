@@ -1,3 +1,5 @@
+#! usr/bin/python3
+
 """
 fichier: main.py
 date de création: 25/03/2022
@@ -15,5 +17,8 @@ def main():
     pass
 
 if __name__ == '__main__':
+    """
+    C'est ici que le programme fait son premier appel à une fonction.
+    """
     main()
 
