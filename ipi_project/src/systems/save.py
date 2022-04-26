@@ -6,53 +6,139 @@ date de création: 26/03/2022
 par `log2git`
 """
 
+from typing import Dict
 import json
+from pathlib import Path
 
-from src.klass import klass
+BASE_FOLDER = './assets/saves/'
 
-BASE_FOLDER = None # il faut la mettre après sinon problematic
+SAVE_MODE = {
+    'json': {
+        'name': 'JSON',
+        'ext': '.json',
+        'func': lambda X: json.dumps(X, sort_keys = True, indent = 4),
+        'savename': lambda Name: f'{Name}.{SAVE_MODE["json"]["ext"]}',
+        'loadfunc': lambda X: json.loads(X)
+    },
+    'screen': {
+        'name': 'SCREEN',
+        'ext': '.tx1',
+        'func': lambda X: print('nothing'), # screenshotter.take_screen()
+        'savename': lambda Name: str(Name) # screenshotter.savefilename()
+    }
+}
 
-def this(save_name, save_mode='json'):
-    ss = klass(ss, 'create', save_name=save_name, save_mode=save_mode, on_create=on_create)
-    return ss
+SaveModeEnum = dict # should change next updates...
+SaveSystem = Dict[str, SaveModeEnum, dict]
 
-def on_create(ss, save_name, save_mode):
-    klass(ss, 'set', key='save_name', value=save_name)
-    klass(ss, 'set', key='save_mode', value=save_mode)
-    klass(klass(ss, 'get', key='__base__'), 'set', key='on_display', value=on_display)
-    klass(ss, 'set', key='save_data', value={})
-    # add methods
-    klass(ss, 'set', key='saveData', value=saveDataFunc)
+def get_definition() -> SaveSystem:
+    return { 'filename': 'standart_save', 'mode': SAVE_MODE['json'], 'data': {} }
 
-def on_display(ss):
-    name = klass(ss, 'get', key='save_name')
-    mode = klass(ss, 'get', key='save_mode').upper()
-    return f'SaveSystem{mode} [Name: {name}]'
+def assert_klass(klass: SaveSystem) -> None:
+    assert 'filename' in klass, 'filename key missing'
+    assert 'mode' in klass, 'mode key missing'
+    assert 'data' in klass, 'data key missing'
 
-def updateDataFunc(ss, new_date):
-    klass(ss, 'set', key='save_date', value=new_data)
+### filename
+def get_filename(ss: SaveSystem) -> str:
+    """
+    Returns save file name.
+    """
+    assert_klass(ss)
 
-def saveDataFunc(ss):
-    mode = klass(ss, 'get', key='save_mode')
-    data = klass(ss, 'get', key='save_data')
-    name = klass(ss, 'get', key='save_name')
-    if mode == 'json':
-        result_json = json.dumps(data, sort_keys = True, indent = 4)
-        writeIntoFile(result_json, f'{SAVEFILENAME}_{name}.json')
-    elif mode == 'secret':
-        result_sss = secretify.make_ugly(data)
-        writeIntoFile(result_sss, secretify.hash_str(SAVEFILENAME))
-    elif mode == 'screen': # et oui il est possible de sauvegarder un screenshot (capture du jeu seulement)
-        result_scr = screenshotter.take_screen()
-        screenshotter.save(result_scr, True) # true pour stardart name (CaptureDuJeu_ANNEE.MOIS.JOUR_HEURE.MINUTE.SECONDE.txt)
-    else:
-        raise Exception('Undefined save_mode.')
+    return ss['filename']
 
-def loadDataFunc(ss):
-    mode = klass(ss, 'get', key='save_mode')
-    name = klass(ss, 'get', key='save_name')
-    if mode == 'json':
-        result = readFromFile(f'{SAVEFILENAME}_{name}.json')
-        readed_data = json.loads(result)
-    elif mode == 'secret':
-        result = readFromFile(secretify.hash_str(SAVEFILENAME))
+### mode
+def get_mode(ss: SaveSystem) -> SaveModeEnum:
+    """
+    Returns save mode.
+    """
+    assert_klass(ss)
+
+    return ss['mode']
+
+### data
+def get_data(ss: SaveSystem) -> dict:
+    """
+    Returns stored data.
+    """
+    assert_klass(ss)
+
+    return ss['data']
+
+def set_data(ss: SaveSystem, data: dict) -> None:
+    """
+    Updates stored data.
+    """
+    assert_klass(ss)
+
+    ss['data'] = data
+
+def save_data(ss: SaveSystem) -> None:
+    """
+    Saves stored data into a file.
+    """
+    assert_klass(ss)
+
+    _mode = get_mode(ss)
+    _mode_name, _callback, _sname = _mode['name'], _mode['ext'], _mode['func'], _mode['savename']
+    _data = get_data(ss)
+    _fname = get_filename(ss)
+    print(f'Using {_mode_name}...')
+    _r = _callback(_data)
+    write_into(_r, _sname(_fname)) 
+    # screenshotter.save(result_scr, True) 
+    # true pour stardart name (CaptureDuJeu_ANNEE.MOIS.JOUR_HEURE.MINUTE.SECONDE.txt)
+
+def load_data(ss: SaveSystem) -> None:
+    """
+    Loads the data from the file.
+    """
+    assert_klass(ss)
+
+    _mode = get_mode(ss)
+    _load, _namesave = _mode['loadfunc'], _mode['savename']
+    _fname = get_filename(ss)
+    _r = read_from(_namesave(_fname))
+    _data = _load(_r)
+    set_data(ss, _data)
+    if get_data(ss) != None: 
+        print(f"LOADED Data < {display(ss)} > => | {_data} |")
+
+### internal methods
+def write_into(data_str: str, final_name: str) -> None:
+    """
+    Utility method, writes a str-object into a file.
+    """
+
+    with open(construct_path(final_name), 'w') as f:
+        f.write(data_str)
+
+def read_from(name: str) -> str:
+    """
+    Utility method, reads and returns content of a file.
+    """
+
+    _out = ''
+    with open(construct_path(name), 'r') as f:
+        _out = f.readlines() # TODO: review
+    return _out
+
+def construct_path(filename: str) -> str:
+    """
+    Utility method, build a path for write/read methods.
+    """
+    p = Path(BASE_FOLDER)
+    q = p / filename
+
+### display
+def display(ss: SaveSystem) -> str:
+    """
+    Returns printable SaveSystem.
+    """
+    assert_klass(ss)
+
+    _fname = get_filename(ss)
+    _mode = get_mode(ss)
+    _mode_name = _mode['name']
+    return f'SaveSystem{_mode_name} [Name: {_fname}]'

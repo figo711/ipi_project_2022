@@ -1,8 +1,0 @@
-Comment utiliser le module 'klass'?
------------------------------------
-
-Il faut créer un nouveau fichier python, qui aura principalement deux fonctions:
-- on_create()
-- 
-
----

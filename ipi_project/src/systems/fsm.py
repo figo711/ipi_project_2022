@@ -3,22 +3,21 @@
 """
 fichier: fsm.py
 date de creation: 31/03/2022
+dernier màj: 10/04/2022
 par: `log2git`
 """
 
 from typing import Any, Callable, List, Tuple, Optional, Dict
-import time
 
-import src.result as Re
+import src.utils.result as Re
 
-State = Tuple[str, Callable[[Any | None], None]]
-Transition = Tuple[str, str, Callable[[Any | None], bool]]
-FSM = Dict[str, List[State], List[Transition]]
+State = Tuple[str, Callable[[Any], None]]
+Transition = Tuple[str, str, Callable[[Any], bool]]
 
-_attrs = { 'current', 'states', 'transitions' }
-_defaults = [ None, [], {} ]
+_attrs = [ 'current', 'states', 'transitions' ]
+_defaults = [ None, [], [] ]
 
-def assert_klass(klass: FSM) -> None:
+def assert_klass(klass: dict) -> None:
     assert 'current' in klass, 'current key missing'
     assert 'states' in klass, 'states key missing'
     assert 'transitions' in klass, 'transitions key missing'
@@ -36,17 +35,17 @@ def assert_transition(tr: Transition) -> None:
     assert callable(tr[2]), 'transition func must be callable.'
 
 ### current functions
-def get_current(sm: FSM) -> State:
+def get_current(sm: dict) -> State:
     """
     Returns current state.
     """
     assert_klass(sm)
     
     result = get_state_by_key(sm, sm['current'])
-    assert Re.ok(result), 'get_current, cannot find current state object.'
+    assert Re.ok(result), f'get_current, cannot find current state object. {Re.msg(result)}'
     return Re.data(result)
 
-def set_current(sm: FSM, name: str) -> None:
+def set_current(sm: dict, name: str) -> None:
     """
     Update current state.
     """
@@ -57,7 +56,7 @@ def set_current(sm: FSM, name: str) -> None:
             sm['current'] = name
             break
 
-def modify_current(sm: FSM, data = None) -> bool:
+def modify_current(sm: dict, data = None) -> bool:
     """
     Perform a transition between current and next state.
     Returns a flag which indicate if a modification has done.
@@ -71,7 +70,7 @@ def modify_current(sm: FSM, data = None) -> bool:
     return False
 
 ### states functions
-def get_states(sm: FSM) -> List[State]:
+def get_states(sm: dict) -> List[State]:
     """
     Returns a list of states.
     """
@@ -79,14 +78,15 @@ def get_states(sm: FSM) -> List[State]:
 
     return sm['states']
 
-def get_state_by_key(sm: FSM, key: str): # -> Result
+def get_state_by_key(sm: dict, key: str): # -> Result
     """
     Returns a state by provided key.
     """
-
-    v = key in get_states(sm)
-    d = sm['states'][key] if v else None
-    return Re.make(code=v, data=d)
+    
+    for state in get_states(sm):
+        if get_state_name(state) == key:
+            return Re.make_ok(state)
+    return Re.make_err(f'State with key `{key}` not found.')
 
 def get_state_name(st: State) -> str:
     """
@@ -96,7 +96,7 @@ def get_state_name(st: State) -> str:
 
     return st[0]
 
-def get_state_func(st: State) -> Callable[[Any | None], None]:
+def get_state_func(st: State) -> Callable[[Any], None]:
     """
     Returns the function of the state.
     """
@@ -104,7 +104,7 @@ def get_state_func(st: State) -> Callable[[Any | None], None]:
 
     return st[1]
 
-def add_state(sm: FSM, name: str, func: Callable[[Any | None], None]) -> None:
+def add_state(sm: dict, name: str, func: Callable[[Any], None]) -> None:
     """
     Adds the new state (with a name and a func).
     """
@@ -113,7 +113,7 @@ def add_state(sm: FSM, name: str, func: Callable[[Any | None], None]) -> None:
     sm['states'].append( (name, func) )
 
 ### transitions functions
-def get_transitions(sm: FSM) -> List[Transition]:
+def get_transitions(sm: dict) -> List[Transition]:
     """
     Returns a list of transitions.
     """
@@ -133,7 +133,7 @@ def get_transition_name(tr: Transition, which: str) -> str:
     if which == 'first': return tr[0]
     if which == 'second': return tr[1]
 
-def get_transition_func(tr: Transition) -> Callable[[Any | None], bool]:
+def get_transition_func(tr: Transition) -> Callable[[Any], bool]:
     """
     Returns the func of the transition.
     """
@@ -141,7 +141,7 @@ def get_transition_func(tr: Transition) -> Callable[[Any | None], bool]:
 
     return tr[2]
 
-def add_transition(sm, current: str, next: str, func: Callable[[Any | None], bool]) -> None:
+def add_transition(sm: dict, current: str, next: str, func: Callable[[Any], bool]) -> None:
     """
     Adds the new transition (between current and next state with a func).
     """
@@ -149,22 +149,20 @@ def add_transition(sm, current: str, next: str, func: Callable[[Any | None], boo
 
     current_state_found = False
     next_state_found = False
-    index_current = 0
-    index_next = 0
 
     for k, v in enumerate(get_states(sm)):
         st_name = get_state_name(v) 
         if st_name == current:
             current_state_found = True
-            index_current = k
         elif st_name == next:
             next_state_found = True
-            index_next = k
         
         if current_state_found and next_state_found:
             break
     
-    sm['transitions'].append( ( index_current, index_next, func ) )
+    assert current_state_found, f'current state: {current} not found. Cannot make a transition.'
+    assert next_state_found, f'next state: {next} not found. Cannot make a transition.'
+    sm['transitions'].append( ( current, next, func ) )
 
 ### display
 def display(sm: dict) -> str:
@@ -175,9 +173,9 @@ def display(sm: dict) -> str:
     
     # TODO: Box constructor
     msg   = '+--- FSM ---+'
-    msg += f"| Cur: {sm['current']} |"
+    if sm['current']: msg += f"| Cur: {get_state_name(get_current(sm))} |"
     msg += f"| Sta: {''.join(get_state_name(st) for st in get_states(sm))} |"
-    msg += f"| Tra: {get_transitions()} |" # TODO: add display transitions (a -> b, b -> c) 
+    msg += f"| Tra: {get_transitions(sm)} |" # TODO: add display transitions (a -> b, b -> c) 
     msg += f"+-----------+"
 
     return msg

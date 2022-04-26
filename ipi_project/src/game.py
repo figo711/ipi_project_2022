@@ -1,5 +1,5 @@
 """
-fichier: app.py
+fichier: game.py
 date de création: 25/03/2022
 par: `log2git`
 """

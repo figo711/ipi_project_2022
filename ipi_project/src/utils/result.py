@@ -12,18 +12,21 @@ Result ou Re, permet d'avoir un objet qui contient le résultat d'une opération
 où on n'est pas sûr d'avoir 
 """
 
-### Constants
+from collections import namedtuple
+
+Result = namedtuple('Result', 'code data msg')
 OK = 'OK'
 ERR = 'ERR'
 
-def ok(result):
-    if 'code' in result:
-        return result['code'] == OK
-    else:
-        raise Exception('ok, code key missing.')
+def make_ok(data) -> Result:
+    return make(code=OK, data=data)
 
-def data(result):
-    if 'data' in result:
-        return result['data']
-    else:
-        raise Exception('data, data key missing.')
+def make_err(msg) -> Result:
+    return make(code=ERR, msg=msg)
+
+def make(code: str, data = None, msg: str = '') -> Result:
+    _result = Result(code, data, msg)
+    return _result
+
+def ok(result: Result) -> bool:
+    return result.code == OK
