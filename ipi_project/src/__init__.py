@@ -12,3 +12,7 @@ import resource as Resource
 import session as Session
 import species as Species
 import tree as Tree
+
+def make_copy(system: dict):
+    new_system = dict(system.get_definition())
+    return new_system
