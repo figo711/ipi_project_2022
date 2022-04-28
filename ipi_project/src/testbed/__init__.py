@@ -1,48 +1,50 @@
 import curses
+import random
+import time
 
-from ..utils import Vector
+import src.testbed.player as Player
 
-DIRECTIONS = {
-    curses.KEY_UP : Vector.make_up(),
-    curses.KEY_DOWN : Vector.make_down(),
-    curses.KEY_LEFT : Vector.make_left(),
-    curses.KEY_RIGHT : Vector.make_right(),
-}
+def init():
+    curses.curs_set(0)
+
+def awake():
+    pl = Player.new(15, 15)
+    return pl
 
 def realmain(stdscr):
-    pl = new()
-    update(stdscr, pl)
+    init()
+    stdscr.border(0)
+    pl = awake()
+    h, w = stdscr.getmaxyx()
+    
+    # for i in range(h * w - 1):
+    #     screen_buffer += chr(random.randint(50, 126))
+    stdscr.clear()
+    stdscr.timeout(10)
+    while True:
+        screen_buffer = [[' ' for x in range(w)] for y in range(h)] 
+        key = stdscr.getch()
+        if key == ord('q'): break
+        Player.update(pl, stdscr)
+        # ... need thread impl
+        stdscr.clear()
+
+        stdscr.border(0)
+        Player.draw(pl, screen_buffer)
+
+        ff = disp_buffer(screen_buffer)
+        assert len(ff) == h * w - 1, f'Error {len(ff)} and {h * w - 1}'
+        stdscr.addstr(ff)
+        stdscr.refresh()
+
+    stdscr.getch()
+
+def disp_buffer(cbuffer) -> str:
+    _buffer = ''
+    for line in cbuffer:
+        _buffer += ''.join(ch for ch in line)
+        # _buffer += '\n'
+    return _buffer[:-1]
 
 def main():
     curses.wrapper(realmain)
-
-def new():
-    r = dict()
-    r['pos'] = Vector.make(15, 15)
-    return r
-
-def update(win, pl):
-    while True:
-        handle(win, pl)
-        draw(win, pl)
-
-def draw(win, pl):
-    win.clear()
-    win.addch(pl['pos'].y, pl['pos'].x, 'F')
-    win.refresh()
-
-
-def handle(win, pl):
-    dir = get_dir(win, pl)
-    move(pl, dir)
-
-def get_dir(win, pl):
-    key = win.getch()
-
-    if key not in DIRECTIONS: return None
-    return DIRECTIONS[key]
-
-def move(pl, dir):
-    pos = pl['pos']
-    new_pos = Vector.add(pos, dir)
-    pl['pos'] = new_pos

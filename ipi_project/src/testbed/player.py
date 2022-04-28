@@ -36,3 +36,7 @@ def update(pl, stdscr):
     new_pos = DIRECTIONS.get(key)
     if new_pos: set_direction(pl, new_pos)
     move(pl)
+
+def draw(pl, buffer):
+    pos = get_position(pl)
+    buffer[pos.y][pos.x] = 'X'
