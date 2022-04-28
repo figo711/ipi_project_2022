@@ -18,7 +18,7 @@ def make_one() -> Vector:
     return make(1, 1)
 
 def make_down() -> Vector:
-    return make(0, -1)
+    return make(0, 1)
 
 def make_left() -> Vector:
     return make(-1, 0)
@@ -27,7 +27,7 @@ def make_right() -> Vector:
     return make(1, 0)
 
 def make_up() -> Vector:
-    return make(0, 1)
+    return make(0, -1)
 
 def make(_x: int, _y: int) -> Vector:
     _vec = Vector(_x, _y)
