@@ -10,6 +10,8 @@ from typing import Dict
 import json
 from pathlib import Path
 
+from src.utils import assert_definition
+
 BASE_FOLDER = './assets/saves/'
 
 SAVE_MODE = {
@@ -28,57 +30,57 @@ SAVE_MODE = {
     }
 }
 
-SaveModeEnum = dict # should change next updates...
-SaveSystem = Dict[str, SaveModeEnum, dict]
+__DEFINITION__ = ['filename', 'mode', 'data']
+__NAME__ = 'SaveSystem'
 
-def get_definition() -> SaveSystem:
-    return { 'filename': 'standart_save', 'mode': SAVE_MODE['json'], 'data': {} }
-
-def assert_klass(klass: SaveSystem) -> None:
-    assert 'filename' in klass, 'filename key missing'
-    assert 'mode' in klass, 'mode key missing'
-    assert 'data' in klass, 'data key missing'
+def get_definition() -> dict:
+    r = { 
+        'filename': 'standart_save', 
+        'mode': SAVE_MODE['json'], 
+        'data': {} 
+    }
+    return r
 
 ### filename
-def get_filename(ss: SaveSystem) -> str:
+def get_filename(ss: dict) -> str:
     """
     Returns save file name.
     """
-    assert_klass(ss)
+    assert_definition(ss, __DEFINITION__, __NAME__)
 
     return ss['filename']
 
 ### mode
-def get_mode(ss: SaveSystem) -> SaveModeEnum:
+def get_mode(ss: dict) -> dict:
     """
     Returns save mode.
     """
-    assert_klass(ss)
+    assert_definition(ss, __DEFINITION__, __NAME__)
 
     return ss['mode']
 
 ### data
-def get_data(ss: SaveSystem) -> dict:
+def get_data(ss: dict) -> dict:
     """
     Returns stored data.
     """
-    assert_klass(ss)
+    assert_definition(ss, __DEFINITION__, __NAME__)
 
     return ss['data']
 
-def set_data(ss: SaveSystem, data: dict) -> None:
+def set_data(ss: dict, data: dict) -> None:
     """
     Updates stored data.
     """
-    assert_klass(ss)
+    assert_definition(ss, __DEFINITION__, __NAME__)
 
     ss['data'] = data
 
-def save_data(ss: SaveSystem) -> None:
+def save_data(ss: dict) -> None:
     """
     Saves stored data into a file.
     """
-    assert_klass(ss)
+    assert_definition(ss, __DEFINITION__, __NAME__)
 
     _mode = get_mode(ss)
     _mode_name, _callback, _sname = _mode['name'], _mode['ext'], _mode['func'], _mode['savename']
@@ -90,11 +92,11 @@ def save_data(ss: SaveSystem) -> None:
     # screenshotter.save(result_scr, True) 
     # true pour stardart name (CaptureDuJeu_ANNEE.MOIS.JOUR_HEURE.MINUTE.SECONDE.txt)
 
-def load_data(ss: SaveSystem) -> None:
+def load_data(ss: dict) -> None:
     """
     Loads the data from the file.
     """
-    assert_klass(ss)
+    assert_definition(ss, __DEFINITION__, __NAME__)
 
     _mode = get_mode(ss)
     _load, _namesave = _mode['loadfunc'], _mode['savename']
@@ -132,11 +134,11 @@ def construct_path(filename: str) -> str:
     q = p / filename
 
 ### display
-def display(ss: SaveSystem) -> str:
+def display(ss: dict) -> str:
     """
     Returns printable SaveSystem.
     """
-    assert_klass(ss)
+    assert_definition(ss, __DEFINITION__, __NAME__)
 
     _fname = get_filename(ss)
     _mode = get_mode(ss)

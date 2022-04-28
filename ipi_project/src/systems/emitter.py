@@ -6,18 +6,24 @@ date de creation: 25/04/2022
 par `log2git`
 """
 
-def assert_emitter(this):
-    assert 'events' in this, ''
-    assert 'once_events' in this, ''
+from src.utils import assert_definition
+
+__DEFINITION__ = [ 'events', 'once_events' ]
+__NAME__ = 'EventEmitter'
 
 def get_definition():
-    return { 'events': {}, 'once_events': {} }
+    r = { 
+        'events': {}, 
+        'once_events': {} 
+    }
+    return r
 
-def on(this, event_name, listener):
+def on(this, event_name: str, listener):
     """
     Initialise un nouveau recepteur qui lorsque receverra un signal
     va executer une commande.
     """
+    assert_definition(this, __DEFINITION__, __NAME__)
 
     if not event_name or not listener:
         return
@@ -28,11 +34,12 @@ def on(this, event_name, listener):
     if listeners.index(listener) == -1:
         listeners.append(listener)
 
-def once(this, event_name, listener):
+def once(this, event_name: str, listener):
     """
     Pareil que `on` sans une repetition de la commande.
     En outre, il execute une seul fois sa commande.
     """
+    assert_definition(this, __DEFINITION__, __NAME__)
 
     if not event_name or not listener:
         return
@@ -44,10 +51,11 @@ def once(this, event_name, listener):
     onceListeners = this['once_events'][event_name]
     onceListeners[listener] = True
 
-def off(this, event_name, listener):
+def off(this, event_name: str, listener):
     """
     Eteint le recepteur indique dans la variable listener.
     """
+    assert_definition(this, __DEFINITION__, __NAME__)
 
     listeners = this['events'] and this['events'][event_name]
     if not listeners or not len(listeners):
@@ -56,11 +64,13 @@ def off(this, event_name, listener):
     if index != -1:
         del listeners[index]
 
-def trigger(this, event_name, *args):
+def trigger(this, event_name: str, *args):
     """
     Envoie un signal, si un recepteur avec le meme event_name
     que le signal alors le recepteur va s'execute
     """
+    assert_definition(this, __DEFINITION__, __NAME__)
+    
     listeners = this['events'] and this['events'][event_name]
     if not listeners or not len(listeners):
         return

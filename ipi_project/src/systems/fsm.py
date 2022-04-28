@@ -3,24 +3,19 @@
 """
 fichier: fsm.py
 date de creation: 31/03/2022
-dernier màj: 10/04/2022
+dernier màj: 28/04/2022
 par: `log2git`
 """
 
 from typing import Any, Callable, List, Tuple, Optional, Dict
 
-import src.utils.result as Re
+from src.utils import Result, assert_definition
 
 State = Tuple[str, Callable[[Any], None]]
 Transition = Tuple[str, str, Callable[[Any], bool]]
 
-_attrs = [ 'current', 'states', 'transitions' ]
-_defaults = [ None, [], [] ]
-
-def assert_klass(klass: dict) -> None:
-    assert 'current' in klass, 'current key missing'
-    assert 'states' in klass, 'states key missing'
-    assert 'transitions' in klass, 'transitions key missing'
+__DEFINITION__ = [ 'current', 'states', 'transitions' ]
+__NAME__ = 'FSM'
 
 def assert_state(st: State) -> None:
     assert isinstance(st, tuple), 'state must be a tuple-typed.'
@@ -34,22 +29,30 @@ def assert_transition(tr: Transition) -> None:
     assert isinstance(tr[0], str) and isinstance(tr[1], str), 'transitions indexes must be an str.'
     assert callable(tr[2]), 'transition func must be callable.'
 
+def get_definition() -> dict:
+    r = {
+        'current': '',
+        'states': [],
+        'transitions': []
+    }
+    return r
+
 ### current functions
 def get_current(sm: dict) -> State:
     """
     Returns current state.
     """
-    assert_klass(sm)
+    assert_definition(sm, __DEFINITION__, __NAME__)
     
     result = get_state_by_key(sm, sm['current'])
-    assert Re.ok(result), f'get_current, cannot find current state object. {Re.msg(result)}'
-    return Re.data(result)
+    assert Result.ok(result), f'get_current, cannot find current state object. {Result.msg(result)}'
+    return Result.data(result)
 
 def set_current(sm: dict, name: str) -> None:
     """
     Update current state.
     """
-    assert_klass(sm)
+    assert_definition(sm, __DEFINITION__, __NAME__)
 
     for _, v in enumerate(sm['states']):
         if get_state_name(v) == name:
@@ -61,7 +64,7 @@ def modify_current(sm: dict, data = None) -> bool:
     Perform a transition between current and next state.
     Returns a flag which indicate if a modification has done.
     """
-    assert_klass(sm)
+    assert_definition(sm, __DEFINITION__, __NAME__)
 
     for t in sm['transitions']:
         if get_transition_name(t, 'first') == get_current(sm) and ( get_transition_func(t)(data) ): # validate by a function
@@ -74,7 +77,7 @@ def get_states(sm: dict) -> List[State]:
     """
     Returns a list of states.
     """
-    assert_klass(sm)
+    assert_definition(sm, __DEFINITION__, __NAME__)
 
     return sm['states']
 
@@ -85,8 +88,8 @@ def get_state_by_key(sm: dict, key: str): # -> Result
     
     for state in get_states(sm):
         if get_state_name(state) == key:
-            return Re.make_ok(state)
-    return Re.make_err(f'State with key `{key}` not found.')
+            return Result.make_ok(state)
+    return Result.make_err(f'State with key `{key}` not found.')
 
 def get_state_name(st: State) -> str:
     """
@@ -108,7 +111,7 @@ def add_state(sm: dict, name: str, func: Callable[[Any], None]) -> None:
     """
     Adds the new state (with a name and a func).
     """
-    assert_klass(sm)
+    assert_definition(sm, __DEFINITION__, __NAME__)
 
     sm['states'].append( (name, func) )
 
@@ -117,7 +120,7 @@ def get_transitions(sm: dict) -> List[Transition]:
     """
     Returns a list of transitions.
     """
-    assert_klass(sm)
+    assert_definition(sm, __DEFINITION__, __NAME__)
 
     return sm['transitions']
 
@@ -145,7 +148,7 @@ def add_transition(sm: dict, current: str, next: str, func: Callable[[Any], bool
     """
     Adds the new transition (between current and next state with a func).
     """
-    assert_klass(sm)
+    assert_definition(sm, __DEFINITION__, __NAME__)
 
     current_state_found = False
     next_state_found = False
@@ -169,7 +172,7 @@ def display(sm: dict) -> str:
     """
     Returns printable FSM.
     """
-    assert_klass(sm)
+    assert_definition(sm, __DEFINITION__, __NAME__)
     
     # TODO: Box constructor
     msg   = '+--- FSM ---+'
