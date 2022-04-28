@@ -4,10 +4,10 @@ date de création: 26/03/2022
 par: `log2git`
 """
 
-import emitter as Emitter
-import fsm as FSM
-import inventory as Inventory
-import save as Save
+import src.systems.emitter as Emitter
+import src.systems.fsm as FSM
+import src.systems.inventory as Inventory
+import src.systems.save as Save
 
 __version__ = '1.0.0'
 

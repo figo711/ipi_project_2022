@@ -4,14 +4,14 @@ date de création: 25/03/2022
 par: `log2git`
 """
 
-import cell as Cell
-import game as Game
-import grid as Grid
-import mind as Mind
-import resource as Resource
-import session as Session
-import species as Species
-import tree as Tree
+import src.cell as Cell
+import src.game as Game
+import src.grid as Grid
+import src.mind as Mind
+import src.resource as Resource
+import src.session as Session
+import src.species as Species
+import src.tree as Tree
 
 def make_copy(system: dict):
     new_system = dict(system.get_definition())
