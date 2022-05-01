@@ -1,43 +1,31 @@
 import curses
 import random
+from threading import Thread
 import time
+from curses import textpad
 
+
+from ..utils import Vector
 import src.testbed.player as Player
 
-def init():
-    curses.curs_set(0)
+DIRECTIONS = {
+    curses.KEY_UP : Vector.make_up(),
+    curses.KEY_DOWN : Vector.make_down(),
+    curses.KEY_LEFT : Vector.make_left(),
+    curses.KEY_RIGHT : Vector.make_right(),
+}
 
 def awake():
     pl = Player.new(15, 15)
     return pl
 
-def realmain(stdscr):
-    init()
-    stdscr.border(0)
-    pl = awake()
-    h, w = stdscr.getmaxyx()
-    
-    # for i in range(h * w - 1):
-    #     screen_buffer += chr(random.randint(50, 126))
-    stdscr.clear()
-    stdscr.timeout(10)
+def loop(stdscr, pl):
     while True:
-        screen_buffer = [[' ' for x in range(w)] for y in range(h)] 
         key = stdscr.getch()
-        if key == ord('q'): break
-        Player.update(pl, stdscr)
-        # ... need thread impl
-        stdscr.clear()
 
-        stdscr.border(0)
-        Player.draw(pl, screen_buffer)
-
-        ff = disp_buffer(screen_buffer)
-        assert len(ff) == h * w - 1, f'Error {len(ff)} and {h * w - 1}'
-        stdscr.addstr(ff)
-        stdscr.refresh()
-
-    stdscr.getch()
+        if key in DIRECTIONS: 
+            Player.set_direction(pl, DIRECTIONS[key])
+            Player.move(pl)
 
 def disp_buffer(cbuffer) -> str:
     _buffer = ''
@@ -47,4 +35,27 @@ def disp_buffer(cbuffer) -> str:
     return _buffer[:-1]
 
 def main():
-    curses.wrapper(realmain)
+    stdscr = curses.initscr()
+    stdscr.timeout(500)
+    stdscr.keypad(1)
+    curses.noecho()
+    curses.curs_set(0)
+    stdscr.border(0)
+    curses.curs_set(0)
+    pl = awake()
+    # Player.start(pl)
+    Thread(target=loop, args=(stdscr,pl,)).start()
+    
+    try:
+        while True:
+            stdscr.clear()
+            h, w  = stdscr.getmaxyx()
+
+            textpad.rectangle(stdscr, 1, 1, h - 2, w - 2)
+
+            stdscr.addstr(Player.get_position(pl).y, Player.get_position(pl).x, Player.get_shape(pl))
+            stdscr.refresh()
+            time.sleep(1/60)
+    finally:
+        stdscr.getch()
+        curses.endwin()
