@@ -15,17 +15,25 @@ DIRECTIONS = {
     curses.KEY_RIGHT : Vector.make_right(),
 }
 
+GAME_ON = False
+
 def awake():
+    # init all objects
     pl = Player.new(15, 15)
     return pl
 
 def loop(stdscr, pl):
-    while True:
+    # updates, another thread
+    global GAME_ON
+    while GAME_ON:
         key = stdscr.getch()
+        if key == ord('b'):
+            GAME_ON = False
 
         if key in DIRECTIONS: 
             Player.set_direction(pl, DIRECTIONS[key])
             Player.move(pl)
+            time.sleep(1/30)
 
 def disp_buffer(cbuffer) -> str:
     _buffer = ''
@@ -34,7 +42,31 @@ def disp_buffer(cbuffer) -> str:
         # _buffer += '\n'
     return _buffer[:-1]
 
+def show_gui(stdscr):
+    period_text = 'Period: ' + 'Hiver'
+    state_text = 'Jour'
+    day_text = '154 jours'
+    age_text = '145 age'
+    score_text = '1000 points'
+    stdscr.addstr(1, 2, period_text)
+    stdscr.addstr(1, 3 + len(period_text) + 2, state_text)
+
+    # stdscr.addstr(1, 3 + len(period_text) + 2 + len(state_text) + 2, day_text)
+
+def draw(stdscr, pl):
+    while GAME_ON:
+        stdscr.clear()
+        h, w  = stdscr.getmaxyx()
+
+        textpad.rectangle(stdscr, 1, 1, h - 2, w - 2)
+        show_gui(stdscr)
+
+        stdscr.addstr(Player.get_position(pl).y, Player.get_position(pl).x, Player.get_shape(pl))
+        stdscr.refresh()
+        
+
 def main():
+    global GAME_ON
     stdscr = curses.initscr()
     stdscr.timeout(500)
     stdscr.keypad(1)
@@ -43,19 +75,12 @@ def main():
     stdscr.border(0)
     curses.curs_set(0)
     pl = awake()
+    GAME_ON = True
     # Player.start(pl)
     Thread(target=loop, args=(stdscr,pl,)).start()
     
     try:
-        while True:
-            stdscr.clear()
-            h, w  = stdscr.getmaxyx()
-
-            textpad.rectangle(stdscr, 1, 1, h - 2, w - 2)
-
-            stdscr.addstr(Player.get_position(pl).y, Player.get_position(pl).x, Player.get_shape(pl))
-            stdscr.refresh()
-            time.sleep(1/60)
+        draw(stdscr, pl)
     finally:
         stdscr.getch()
         curses.endwin()

@@ -46,7 +46,7 @@ def move(pl):
     pos = get_position(pl)
     dir = get_direction(pl)
     set_position(pl, Vector.add(pos, dir))
-    #set_direction(pl, Vector.make_zero())
+    set_direction(pl, Vector.make_zero())
 
 def draw(pl, buffer):
     pos = get_position(pl)

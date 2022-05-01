@@ -12,5 +12,8 @@ import src.systems.save as Save
 __version__ = '1.0.0'
 
 def make_copy(system: dict):
-    new_system = dict(system.get_definition())
+    return make_by_definition(system.get_definition())
+
+def make_by_definition(definition: dict):
+    new_system = dict(definition)
     return new_system
